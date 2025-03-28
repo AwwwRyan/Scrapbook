@@ -38,6 +38,7 @@ export default function ReviewPage() {
 
     try {
       setSubmitting(true);
+      // Remove movie addition, just submit the review
       await movieApi.addReview(params.id as string, {
         review_text: review.trim(),
         rating: rating

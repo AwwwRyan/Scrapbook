@@ -24,6 +24,15 @@ export default function MoviePage() {
         setLoading(true);
         const data = await movieApi.getMovie(params.id as string);
         setMovie(data);
+        
+        // Only try to add movie if authenticated and we have movie data
+        if (isAuthenticated && data) {
+          try {
+            await movieApi.addMovie(data); // Pass the entire movie object
+          } catch (error: any) {
+            console.error('Error adding movie to DB:', error);
+          }
+        }
       } catch (err) {
         setError('Failed to load movie details');
       } finally {
@@ -32,12 +41,13 @@ export default function MoviePage() {
     };
 
     fetchMovie();
-  }, [params.id]);
+  }, [params.id, isAuthenticated]); // Dependencies that trigger the effect
 
   const handleReviewClick = () => {
     if (!isAuthenticated) {
       toast.error('Please login to write a review');
-      router.push(`/login?redirect=/movies/${params.id}/review`);
+      sessionStorage.setItem('redirectAfterLogin', `/movies/${params.id}/review`);
+      router.push('/login');
       return;
     }
     router.push(`/movies/${params.id}/review`);
@@ -45,10 +55,7 @@ export default function MoviePage() {
 
   const handleWatchlistClick = async () => {
     if (!isAuthenticated) {
-      toast.error('Please login to add to watchlist');
-      sessionStorage.setItem('redirectAfterLogin', `/movies/${params.id}`);
-      router.push('/login');
-      return;
+      return; // Early return since button will be disabled
     }
     
     try {
@@ -205,15 +212,23 @@ export default function MoviePage() {
                   className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 rounded-full px-6 shadow-md transition-all duration-300"
                 >
                   <PenLine className="w-4 h-4 mr-2" />
-                  Write Review
+                  {isAuthenticated ? 'Write Review' : 'Login to Review'}
                 </Button>
                 <Button 
                   variant="outline" 
                   onClick={handleWatchlistClick}
-                  className="border-2 border-pink-300 bg-white text-pink-600 hover:bg-pink-50 hover:text-pink-700 rounded-full px-6 transition-all duration-300"
+                  disabled={!isAuthenticated}
+                  className={`border-2 rounded-full px-6 transition-all duration-300 ${
+                    isAuthenticated 
+                      ? 'border-pink-300 bg-white text-pink-600 hover:bg-pink-50 hover:text-pink-700'
+                      : 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
+                  }`}
+                  title={!isAuthenticated ? 'Please login to add to watchlist' : ''}
                 >
-                  <BookmarkPlus className="w-4 h-4 mr-2" />
-                  Add to Watchlist
+                  <BookmarkPlus className={`w-4 h-4 mr-2 ${
+                    isAuthenticated ? 'text-pink-600' : 'text-gray-400'
+                  }`} />
+                  {isAuthenticated ? 'Add to Watchlist' : 'Login to Add to Watchlist'}
                 </Button>
               </div>
             </div>

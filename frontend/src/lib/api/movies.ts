@@ -56,13 +56,22 @@ const mapMovieData = (movie: RapidAPIMovie): Movie => ({
 });
 
 export const movieApi = {
-  getPopularMovies: async (): Promise<Movie[]> => {
+  getPopularMovies: async (page: number = 1, pageSize: number = 8): Promise<Movie[]> => {
     try {
-      const response = await axiosInstance.get(`https://${RAPIDAPI_HOST}/imdb/most-popular-movies`, {
-        headers: rapidApiHeaders
-      });
+      const response = await axiosInstance.get<RapidAPIMovie[]>(
+        'https://imdb236.p.rapidapi.com/imdb/most-popular-movies',
+        {
+          headers: rapidApiHeaders,
+          params: {
+            page,
+            pageSize
+          }
+        }
+      );
       
-      return response.data.slice(0, 8).map(mapMovieData);
+      return response.data
+        .slice((page - 1) * pageSize, page * pageSize)
+        .map(mapMovieData);
     } catch (error) {
       console.error('Error fetching popular movies:', error);
       throw error;
@@ -82,21 +91,37 @@ export const movieApi = {
     }
   },
 
-  addMovie: async (movieId: string) => {
+  addMovie: async (movieData: Movie) => {
     try {
-      // Get movie data from RapidAPI
-      const movieData = await movieApi.getMovie(movieId);
-      console.log('Movie data to be added:', movieData); // Debug log
-
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('No authentication token found');
       }
 
-      // Add movie to our database with proper headers
+      // Format the request body according to the API requirements
+      const formattedMovieData = {
+        id: movieData.id,
+        title: movieData.title,
+        description: movieData.description || '',
+        image_url: movieData.image_url || '',
+        release_date: movieData.release_date,
+        start_year: movieData.start_year,
+        end_year: movieData.end_year,
+        runtime_minutes: movieData.runtime_minutes,
+        genres: movieData.genres,
+        language: movieData.language,
+        countries: movieData.countries,
+        rating: movieData.rating,
+        num_votes: movieData.num_votes,
+        budget: movieData.budget,
+        gross_worldwide: movieData.gross_worldwide,
+        is_adult: movieData.is_adult
+      };
+
+      // Make the API request with proper headers and formatted data
       const response = await axiosInstance.post(
         '/movies/add/',
-        movieData,
+        formattedMovieData,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -105,26 +130,17 @@ export const movieApi = {
         }
       );
       
-      console.log('Add movie response:', response.data); // Debug log
       return response.data;
     } catch (error: any) {
       if (error.response?.status === 401) {
-        // Handle unauthorized error
         useAuthStore.getState().logout();
-        window.location.href = '/login';
       }
-      console.error('Error adding movie:', {
-        error,
-        movieId,
-        response: error.response?.data
-      });
       throw error;
     }
   },
 
   addReview: async (movieId: string, reviewData: { rating: number; review_text: string }) => {
     try {
-      await movieApi.addMovie(movieId);
       const response = await axiosInstance.post(
         `/movies/${movieId}/reviews/create/`,
         {
@@ -176,19 +192,24 @@ export const movieApi = {
     }
   },
 
-  getTopRatedMovies: async (): Promise<Movie[]> => {
+  getTopRatedMovies: async (page: number = 1, pageSize: number = 8): Promise<Movie[]> => {
     try {
-      const response = await axiosInstance.get<RapidAPIMovie[]>('https://imdb236.p.rapidapi.com/imdb/top250-movies', {
-        headers: rapidApiHeaders
-      });
+      const response = await axiosInstance.get<RapidAPIMovie[]>(
+        'https://imdb236.p.rapidapi.com/imdb/top250-movies',
+        {
+          headers: rapidApiHeaders,
+          params: {
+            page,
+            pageSize
+          }
+        }
+      );
       
-      return response.data.slice(0, 20).map(mapMovieData);
-    } catch (error: any) {
-      console.error('RapidAPI Error Details:', {
-        message: error.message,
-        response: error.response?.data,
-        headers: rapidApiHeaders
-      });
+      return response.data
+        .slice((page - 1) * pageSize, page * pageSize)
+        .map(mapMovieData);
+    } catch (error) {
+      console.error('Error fetching top rated movies:', error);
       throw error;
     }
   },

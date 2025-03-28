@@ -1,19 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useDebounce } from '@/lib/hooks/useDebounce';
 
 export default function SearchBar() {
-  const [query, setQuery] = useState('');
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const router = useRouter();
+
+  useEffect(() => {
+    // Perform search with debouncedSearch value
+  }, [debouncedSearch]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query)}`);
+    if (search.trim()) {
+      router.push(`/search?q=${encodeURIComponent(search)}`);
     }
   };
 
@@ -22,8 +28,8 @@ export default function SearchBar() {
       <Input
         type="search"
         placeholder="Search for movies..."
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
         className="flex-1"
       />
       <Button type="submit" className="bg-purple-600 hover:bg-purple-700">
