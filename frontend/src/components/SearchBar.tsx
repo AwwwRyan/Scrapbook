@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useDebounce } from '@/lib/hooks/useDebounce';
+import { useDebounce } from '@/hooks/useDebounce';
 
 export default function SearchBar() {
   const [search, setSearch] = useState('');

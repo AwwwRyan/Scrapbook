@@ -40,8 +40,8 @@ class Review(models.Model):
         return f"{self.user.name} - {self.movie.title} ({self.rating})"
 
 class WatchLater(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="watchlist")
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="watchlist")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="watch_later")
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="watch_later")
     added_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -49,3 +49,14 @@ class WatchLater(models.Model):
 
     def __str__(self):
         return f"{self.user.name} wants to watch {self.movie.title}"
+
+class Watchlist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="watchlist")
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="watchlist")
+    watched_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'movie')  # Avoid duplicate entries
+
+    def __str__(self):
+        return f"{self.user.name} has watched {self.movie.title}"

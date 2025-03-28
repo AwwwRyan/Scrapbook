@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card"
 import { authApi } from "@/lib/api/auth"
 import { Heart, Sparkles, UserPlus, Calendar, Mail, User, Lock } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { toast } from "react-hot-toast"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -27,10 +28,19 @@ export default function RegisterPage() {
     e.preventDefault()
     try {
       const response = await authApi.register(formData)
-      sessionStorage.setItem("token", response.token)
-      router.push("/")
+      if (response.token) {
+        sessionStorage.setItem("token", response.token)
+        
+        // Get the redirect path
+        const redirectPath = sessionStorage.getItem('redirectAfterRegister')
+        sessionStorage.removeItem('redirectAfterRegister')
+        
+        // Redirect to the stored path or default to profile
+        router.push(redirectPath || '/profile')
+      }
     } catch (err) {
       console.error("Registration failed:", err)
+      toast.error("Registration failed. Please try again.")
     }
   }
 

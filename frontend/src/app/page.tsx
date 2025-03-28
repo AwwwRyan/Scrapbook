@@ -11,6 +11,7 @@ import { useAuthStore } from "@/store/auth"
 import { toast } from "react-hot-toast"
 import { Heart, Sparkles, Star, Calendar, Film, Search, User, LogIn } from "lucide-react"
 import Image from 'next/image'
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 
 // Memoize MovieGrid component to prevent unnecessary re-renders
 const MovieGrid = memo(({
@@ -172,29 +173,6 @@ export default function HomePage() {
     }
   }, [isAuthenticated])
 
-  const handleEditProfile = () => {
-    console.log("isAuthenticated:", isAuthenticated)
-    console.log("button clicked")
-    if (!isAuthenticated) {
-      toast.error("Please login to edit profile")
-      sessionStorage.setItem("redirectAfterLogin", "/profile/edit")
-      router.push("/login")
-      return
-    } else {
-      console.log("pushing to profile/edit")
-      router.push("/profile/edit")
-    }
-  }
-
-  const handleLogin = () => {
-    if (isAuthenticated) {
-      toast.success("You are already logged in")
-      return
-    }
-    sessionStorage.setItem("redirectAfterLogin", "/")
-    router.push("/login")
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-r from-pink-100 to-purple-100">
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
@@ -217,34 +195,24 @@ export default function HomePage() {
         <div className="flex flex-col gap-6 mb-12">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white/80 backdrop-blur-sm p-6 rounded-xl border-2 border-pink-200 shadow-md">
             <h1 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-purple-600 flex items-center">
-             
               Scrapbook
               <Sparkles className="ml-2 text-pink-500" size={24} />
             </h1>
-            <div className="flex gap-4">
-              <Button
-                onClick={handleEditProfile}
-                className={`${
-                  isAuthenticated
-                    ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                    : "bg-gray-400 hover:bg-gray-500"
-                } rounded-full px-6 shadow-md transition-all duration-300`}
-              >
-                <User className="w-4 h-4 mr-2" />
-                Edit Profile
-              </Button>
-              <Button
-                onClick={handleLogin}
-                className={`${
-                  !isAuthenticated
-                    ? "bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
-                    : "bg-gray-400 hover:bg-gray-500"
-                } rounded-full px-6 shadow-md transition-all duration-300`}
-              >
-                <LogIn className="w-4 h-4 mr-2" />
-                {isAuthenticated ? "Already Logged In" : "Login"}
-              </Button>
-            </div>
+            
+            <button
+              onClick={() => router.push('/profile')}
+              className="relative group"
+            >
+              <Avatar className="h-10 w-10 transition-transform group-hover:scale-110">
+                <AvatarImage 
+                  src="/default-avatar.png" 
+                  alt="/default-avatar.png" 
+                />
+                <AvatarFallback className="bg-gradient-to-r from-pink-500 to-purple-500 text-white">
+                  <User size={20} />
+                </AvatarFallback>
+              </Avatar>
+            </button>
           </div>
 
           {/* Search Bar */}

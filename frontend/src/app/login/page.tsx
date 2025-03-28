@@ -50,20 +50,17 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const response = await authApi.login(formData)
-      console.log('Login response:', response)
       
       if (response.access) {
         setToken(response.access)
         toast.success('Login successful')
         
-        // Force redirect if useEffect doesn't trigger
+        // Get the redirect path
         const redirectPath = sessionStorage.getItem('redirectAfterLogin')
-        setTimeout(() => {
-          if (window.location.pathname === '/login') {
-            console.log('Forcing redirect to:', redirectPath || '/')
-            window.location.href = redirectPath || '/'
-          }
-        }, 1000)
+        sessionStorage.removeItem('redirectAfterLogin')
+        
+        // Redirect to the stored path or default to profile
+        router.push(redirectPath || '/profile')
       } else {
         throw new Error('No access token received')
       }

@@ -53,21 +53,21 @@ export default function MoviePage() {
     router.push(`/movies/${params.id}/review`);
   };
 
-  const handleWatchlistClick = async () => {
+  const handleWatchlaterClick = async () => {
     if (!isAuthenticated) {
-      return; // Early return since button will be disabled
+      return; 
     }
     
     try {
-      await movieApi.addToWatchlist(movie!.id);
-      toast.success('Added to watchlist');
+      await movieApi.addToWatchlater(movie!.id);
+      toast.success('Added to watch later');
     } catch (error: any) {
       if (error.response?.status === 401) {
         useAuthStore.getState().logout();
         sessionStorage.setItem('redirectAfterLogin', `/movies/${params.id}`);
         router.push('/login');
       } else {
-        toast.error('Failed to add to watchlist');
+        toast.error('Failed to add to watchlater');
       }
     }
   };
@@ -216,19 +216,19 @@ export default function MoviePage() {
                 </Button>
                 <Button 
                   variant="outline" 
-                  onClick={handleWatchlistClick}
+                  onClick={handleWatchlaterClick}
                   disabled={!isAuthenticated}
                   className={`border-2 rounded-full px-6 transition-all duration-300 ${
                     isAuthenticated 
                       ? 'border-pink-300 bg-white text-pink-600 hover:bg-pink-50 hover:text-pink-700'
                       : 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
                   }`}
-                  title={!isAuthenticated ? 'Please login to add to watchlist' : ''}
+                  title={!isAuthenticated ? 'Please login to add to watchlater' : ''}
                 >
                   <BookmarkPlus className={`w-4 h-4 mr-2 ${
                     isAuthenticated ? 'text-pink-600' : 'text-gray-400'
                   }`} />
-                  {isAuthenticated ? 'Add to Watchlist' : 'Login to Add to Watchlist'}
+                  {isAuthenticated ? 'Add to Watchlater' : 'Login to Add to Watchlater'}
                 </Button>
               </div>
             </div>

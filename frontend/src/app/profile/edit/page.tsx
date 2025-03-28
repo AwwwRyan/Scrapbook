@@ -63,7 +63,7 @@ export default function EditProfilePage() {
     try {
       await authApi.updateProfile(userData)
       toast.success("Profile updated successfully")
-      router.push("/")
+      router.push("/profile")
     } catch (err) {
       toast.error("Failed to update profile")
       console.error(err)
