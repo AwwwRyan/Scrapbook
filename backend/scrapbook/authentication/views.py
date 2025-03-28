@@ -99,3 +99,24 @@ def delete_user(request):
     user = request.user
     user.delete()
     return Response({"message": "User deleted successfully"}, status=200)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def fetch_user_details(request):
+    """
+    Fetch details of the authenticated user.
+    Requires JWT token in the Authorization header.
+    """
+    user = request.user
+    
+    user_data = {
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'date_joined': user.date_joined,
+        # Add any other user fields you want to include
+    }
+    
+    return Response(user_data, status=status.HTTP_200_OK)

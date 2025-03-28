@@ -7,6 +7,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     
     # Authentication URLs
+    path('users/profile/', fetch_user_details, name='fetch_user_details'),
     path('users/create/', create_user, name='create_user'),
     path('users/login/', login_user, name='login_user'),
     path('users/logout/', logout_user, name='logout_user'), 

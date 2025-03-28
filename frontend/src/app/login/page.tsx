@@ -2,32 +2,83 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 import { authApi } from "@/lib/api/auth"
 import { Heart, Sparkles } from "lucide-react"
+import { useAuthStore } from "@/store/auth"
+import { toast } from "react-hot-toast"
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get('redirect') || '/'
+  const { setToken, isAuthenticated } = useAuthStore()
+  
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   })
-  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const handleRedirect = async () => {
+      if (isAuthenticated) {
+        const redirectPath = sessionStorage.getItem('redirectAfterLogin')
+        console.log('Attempting to redirect to:', redirectPath || '/')
+        
+        try {
+          await router.push(redirectPath || '/')
+          sessionStorage.removeItem('redirectAfterLogin')
+        } catch (error) {
+          console.error('Redirection failed:', error)
+          // Fallback to window.location if router fails
+          window.location.href = redirectPath || '/'
+        }
+      }
+    }
+
+    handleRedirect()
+  }, [isAuthenticated, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setLoading(true)
     try {
       const response = await authApi.login(formData)
-      sessionStorage.setItem("token", response.token) // Use sessionStorage
-      router.push("/") // Redirect to home page
+      console.log('Login response:', response)
+      
+      if (response.access) {
+        setToken(response.access)
+        toast.success('Login successful')
+        
+        // Force redirect if useEffect doesn't trigger
+        const redirectPath = sessionStorage.getItem('redirectAfterLogin')
+        setTimeout(() => {
+          if (window.location.pathname === '/login') {
+            console.log('Forcing redirect to:', redirectPath || '/')
+            window.location.href = redirectPath || '/'
+          }
+        }, 1000)
+      } else {
+        throw new Error('No access token received')
+      }
     } catch (err) {
-      setError("Invalid credentials")
+      console.error('Login error:', err)
+      toast.error('Invalid credentials')
+      setToken(null)
+    } finally {
+      setLoading(false)
     }
+  }
+
+  // If already authenticated, don't show login page
+  if (isAuthenticated) {
+    return <div>Redirecting...</div>
   }
 
   return (<>
@@ -90,18 +141,12 @@ export default function LoginPage() {
               />
             </div>
 
-            {error && (
-              <div className="bg-pink-50 border border-pink-200 text-pink-600 px-4 py-2 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
-
             <Button
               type="submit"
               className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-medium py-2 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg"
+              disabled={loading}
             >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Login
+              {loading ? 'Logging in...' : 'Login'}
             </Button>
 
             <div className="relative my-4">
