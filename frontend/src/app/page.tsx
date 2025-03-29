@@ -123,14 +123,23 @@ export default function HomePage() {
   const { isAuthenticated } = useAuthStore()
   const [popularMovies, setPopularMovies] = useState<Movie[]>([])
   const [topRatedMovies, setTopRatedMovies] = useState<Movie[]>([])
+  const [searchResults, setSearchResults] = useState<Movie[]>([])
+  const [isSearching, setIsSearching] = useState(false)
   const [loading, setLoading] = useState({
     popular: true,
     topRated: true,
+    search: false,
   })
   const [error, setError] = useState({
     popular: null as string | null,
     topRated: null as string | null,
+    search: null as string | null,
   })
+
+  const handleSearchResults = async (results: Movie[]) => {
+    setIsSearching(true)
+    setSearchResults(results)
+  }
 
   useEffect(() => {
     const fetchMovies = async () => {
@@ -194,10 +203,17 @@ export default function HomePage() {
         {/* Header Section */}
         <div className="flex flex-col gap-6 mb-12">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white/80 backdrop-blur-sm p-6 rounded-xl border-2 border-pink-200 shadow-md">
-            <h1 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-purple-600 flex items-center">
+            <div 
+              onClick={() => router.push('/')}
+              className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-purple-600 flex items-center cursor-pointer hover:scale-105 transition-transform"
+            >
               Scrapbook
               <Sparkles className="ml-2 text-pink-500" size={24} />
-            </h1>
+            </div>
+
+            <div className="flex-1 max-w-3xl w-full mx-4">
+              <SearchBar onSearch={handleSearchResults} />
+            </div>
             
             <button
               onClick={() => router.push('/profile')}
@@ -214,36 +230,67 @@ export default function HomePage() {
               </Avatar>
             </button>
           </div>
-
-          {/* Search Bar */}
-          {/* <div className="w-full max-w-2xl mx-auto bg-white/80 backdrop-blur-sm p-4 rounded-xl border-2 border-pink-200 shadow-md">
-            <div className="flex items-center justify-center mb-2">
-              <Search className="text-pink-500 mr-2" />
-              <h2 className="text-lg font-medium text-purple-700">Find Your Favorite Movies</h2>
-            </div>
-            <SearchBar />
-          </div> */}
         </div>
 
         {/* Movies Sections */}
         <div className="space-y-12">
-          {/* Popular Movies */}
-          <section className="bg-white/80 backdrop-blur-sm p-6 rounded-xl border-2 border-pink-200 shadow-md">
-            <h2 className="text-2xl font-semibold mb-6 text-purple-700 flex items-center">
-              <Sparkles className="mr-2 text-pink-500" />
-              Popular Movies
-            </h2>
-            <MovieGrid movies={popularMovies} error={error.popular} loading={loading.popular} />
-          </section>
+          {/* Search Results */}
+          {isSearching && (
+            <section className="bg-white/80 backdrop-blur-sm p-6 rounded-xl border-2 border-pink-200 shadow-md">
+              <h2 className="text-2xl font-semibold mb-6 text-purple-700 flex items-center justify-between">
+                <div className="flex items-center">
+                  <Search className="mr-2 text-pink-500" />
+                  Search Results
+                </div>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setIsSearching(false)
+                    setSearchResults([])
+                  }}
+                  className="text-pink-500 hover:text-pink-700"
+                >
+                  Clear Search
+                </Button>
+              </h2>
+              <MovieGrid 
+                movies={searchResults} 
+                error={error.search} 
+                loading={loading.search} 
+              />
+            </section>
+          )}
 
-          {/* Top Rated Movies */}
-          <section className="bg-white/80 backdrop-blur-sm p-6 rounded-xl border-2 border-pink-200 shadow-md">
-            <h2 className="text-2xl font-semibold mb-6 text-purple-700 flex items-center">
-              <Star className="mr-2 text-pink-500 fill-pink-500" />
-              Top Rated Movies
-            </h2>
-            <MovieGrid movies={topRatedMovies} error={error.topRated} loading={loading.topRated} />
-          </section>
+          {/* Show Popular and Top Rated sections only when not searching */}
+          {!isSearching && (
+            <>
+              {/* Popular Movies */}
+              <section className="bg-white/80 backdrop-blur-sm p-6 rounded-xl border-2 border-pink-200 shadow-md">
+                <h2 className="text-2xl font-semibold mb-6 text-purple-700 flex items-center">
+                  <Sparkles className="mr-2 text-pink-500" />
+                  Popular Movies
+                </h2>
+                <MovieGrid 
+                  movies={popularMovies} 
+                  error={error.popular} 
+                  loading={loading.popular} 
+                />
+              </section>
+
+              {/* Top Rated Movies */}
+              <section className="bg-white/80 backdrop-blur-sm p-6 rounded-xl border-2 border-pink-200 shadow-md">
+                <h2 className="text-2xl font-semibold mb-6 text-purple-700 flex items-center">
+                  <Star className="mr-2 text-pink-500 fill-pink-500" />
+                  Top Rated Movies
+                </h2>
+                <MovieGrid 
+                  movies={topRatedMovies} 
+                  error={error.topRated} 
+                  loading={loading.topRated} 
+                />
+              </section>
+            </>
+          )}
         </div>
       </div>
     </div>

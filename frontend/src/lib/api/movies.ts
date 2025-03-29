@@ -88,13 +88,40 @@ export const movieApi = {
     }
   },
 
-  searchMovies: async (params: any) => {
+  searchMovies: async (searchTerm: string, page: number = 1, pageSize: number = 24): Promise<Movie[]> => {
     try {
-      const response = await axiosInstance.get(`https://${RAPIDAPI_HOST}/imdb/search`, {
-        headers: rapidApiHeaders,
-        params
-      });
-      return response.data;
+      const response = await rapidApiInstance.get(
+        `https://${RAPIDAPI_HOST}/imdb/search`,
+        {
+          params: {
+            type: 'movie',
+            primaryTitleAutocomplete: searchTerm,
+            rows: pageSize.toString(),
+            page: page.toString()
+          }
+        }
+      );
+
+      // The search results are in response.data.results
+      return response.data.results.map((movie: any) => ({
+        id: movie.id,
+        title: movie.primaryTitle,
+        original_title: movie.originalTitle,
+        description: movie.description || '',
+        image_url: movie.primaryImage,
+        release_date: movie.releaseDate,
+        start_year: movie.startYear,
+        end_year: movie.endYear,
+        runtime_minutes: movie.runtimeMinutes,
+        genres: movie.genres || [],
+        language: movie.spokenLanguages?.[0] || 'en',
+        countries: movie.countriesOfOrigin || [],
+        rating: movie.averageRating,
+        num_votes: movie.numVotes,
+        budget: movie.budget,
+        gross_worldwide: movie.grossWorldwide,
+        is_adult: movie.isAdult
+      }));
     } catch (error) {
       console.error('Error searching movies:', error);
       throw error;
