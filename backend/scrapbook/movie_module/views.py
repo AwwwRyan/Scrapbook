@@ -39,17 +39,32 @@ def get_movie_reviews(request, movie_id):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_review(request, movie_id):
-    movie = get_object_or_404(Movie, id=movie_id)
-    # Create a mutable copy of request.data
-    data = request.data.copy()
-    # Add the movie ID to the data
-    data['movie'] = movie_id
-    
-    serializer = ReviewSerializer(data=data)
-    if serializer.is_valid():
-        serializer.save(user=request.user, movie=movie)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        
+        movie = get_object_or_404(Movie, id=movie_id)
+        
+        # Check if review already exists
+        existing_review = Review.objects.filter(user=request.user, movie=movie).first()
+        
+        if existing_review:
+            # Update existing review
+            serializer = ReviewSerializer(existing_review, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Create new review
+        # Add movie to the request data
+        review_data = request.data.copy()
+        review_data['movie'] = movie.id
+        serializer = ReviewSerializer(data=review_data)
+        if serializer.is_valid():
+            serializer.save(user=request.user, movie=movie)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT', 'DELETE'])
 @permission_classes([IsAuthenticated])
@@ -109,11 +124,60 @@ def get_user_watch_later(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_movie(request):
-    serializer = MovieSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        # Check if movie already exists
+        movie_id = request.data.get('id')
+        if not movie_id:
+            return Response({'error': 'Movie ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Ensure genres is a list
+        genres = request.data.get('genres', [])
+        if isinstance(genres, str):
+            try:
+                genres = json.loads(genres)
+            except json.JSONDecodeError:
+                genres = [genres]
+        elif not isinstance(genres, list):
+            genres = [str(genres)]
+            
+            
+        movie, created = Movie.objects.get_or_create(
+            id=movie_id,
+            defaults={
+                'title': request.data.get('title'),
+                'original_title': request.data.get('original_title'),
+                'description': request.data.get('description'),
+                'image_url': request.data.get('image_url'),
+                'release_date': request.data.get('release_date'),
+                'start_year': request.data.get('start_year'),
+                'end_year': request.data.get('end_year'),
+                'runtime_minutes': request.data.get('runtime_minutes'),
+                'genres': genres,  # Store as a list, Django will handle JSON conversion
+                'language': request.data.get('language'),
+                'countries': request.data.get('countries'),
+                'rating': request.data.get('rating'),
+                'num_votes': request.data.get('num_votes'),
+                'budget': request.data.get('budget'),
+                'gross_worldwide': request.data.get('gross_worldwide'),
+                'is_adult': request.data.get('is_adult', False)
+            }
+        )
+        
+        if created:
+            serializer = MovieSerializer(movie)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            # Update existing movie if needed
+            update_data = request.data.copy()
+            update_data['genres'] = genres  # Ensure genres is updated correctly
+            serializer = MovieSerializer(movie, data=update_data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 # Watchlist related views
 @api_view(['GET'])
@@ -151,12 +215,6 @@ def get_user_watchlist(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_statistics(request):
-    cache_key = f'user_stats_{request.user.id}'
-    cached_data = cache.get(cache_key)
-    
-    if cached_data:
-        return Response(cached_data)
-        
     user = request.user
     
     # Get counts and averages
@@ -192,7 +250,6 @@ def get_user_statistics(request):
         "review_completion_rate": round(completion_rate, 1)
     }
     
-    cache.set(cache_key, response_data, timeout=3600)  # Cache for 1 hour
     return Response(response_data)
 
 @api_view(['GET'])
@@ -247,20 +304,15 @@ def get_recent_activity(request):
 def get_genre_analytics(request):
     user = request.user
     
-    # Debug print
-    print(f"User: {user.username}")
     
     # Get all watched movies with their genres and reviews
     watched_movies = Watchlist.objects.filter(user=user).select_related('movie')
-    print(f"Total watched movies: {watched_movies.count()}")
     
     # Initialize counters
     genre_distribution = defaultdict(int)
     genre_ratings = defaultdict(list)
     
     for watch in watched_movies:
-        # Debug print
-        print(f"Movie: {watch.movie.title}, Genres: {watch.movie.genres}")
         
         if watch.movie.genres:  # Check if genres exist
             # Handle both string and list formats
@@ -273,18 +325,21 @@ def get_genre_analytics(request):
             elif not isinstance(genres, list):
                 genres = [str(genres)]
             
+            # Ensure genres is a list
+            if not isinstance(genres, list):
+                genres = [str(genres)]
+            
             for genre in genres:
-                genre_distribution[genre] += 1
+                # Ensure genre is a string
+                genre_str = str(genre).strip()
+                if genre_str:
+                    genre_distribution[genre_str] += 1
                 
-                # Get rating if exists
-                review = Review.objects.filter(user=user, movie=watch.movie).first()
-                if review:
-                    print(f"Found review with rating: {review.rating}")
-                    genre_ratings[genre].append(review.rating)
-    
-    print(f"Genre distribution: {dict(genre_distribution)}")
-    print(f"Genre ratings: {dict(genre_ratings)}")
-    
+                    # Get rating if exists
+                    review = Review.objects.filter(user=user, movie=watch.movie).first()
+                    if review:
+                        genre_ratings[genre_str].append(review.rating)
+        
     # Calculate favorite genres
     favorite_genres = []
     for genre, count in genre_distribution.items():
@@ -318,7 +373,9 @@ def get_genre_analytics(request):
                 genres = [str(genres)]
                 
             for genre in genres:
-                trending[genre] += 1
+                genre_str = str(genre).strip()
+                if genre_str:
+                    trending[genre_str] += 1
     
     trending_genres = [
         {
@@ -335,7 +392,6 @@ def get_genre_analytics(request):
         "trending_genres": sorted(trending_genres, key=lambda x: x['recent_watches'], reverse=True)
     }
     
-    print(f"Final response: {response_data}")
     
     return Response(response_data)
 

@@ -38,15 +38,27 @@ export default function ReviewPage() {
 
     try {
       setSubmitting(true);
-      // Remove movie addition, just submit the review
-      await movieApi.addReview(params.id as string, {
+      console.log('Submitting review with data:', {
+        movieId: params.id,
+        rating,
+        review_text: review.trim()
+      });
+      
+      const response = await movieApi.addReview(params.id as string, {
         review_text: review.trim(),
         rating: rating
       });
       
+      console.log('Review submission response:', response);
       toast.success('Review submitted successfully');
-      router.push(`/movies/${params.id}`);
+      router.replace(`/movies/${params.id}`);
     } catch (error: any) {
+      console.error('Review submission error:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+      
       if (error.response?.status === 401) {
         useAuthStore.getState().logout();
         sessionStorage.setItem('redirectAfterLogin', `/movies/${params.id}/review`);

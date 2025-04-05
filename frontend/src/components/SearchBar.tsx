@@ -62,7 +62,6 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
             </>
           ) : (
             <>
-              <Search className="w-4 h-4 mr-2" />
               Search
             </>
           )}

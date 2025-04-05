@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/auth';
 import { toast } from 'react-hot-toast';
-import { Heart, Sparkles, Star, Calendar, Clock, Globe, Film, PenLine, BookmarkPlus, Languages } from 'lucide-react';
+import { Heart, Sparkles, Star, Calendar, Clock, Globe, Film, PenLine, BookmarkPlus, Languages, BookmarkCheck, Pencil } from 'lucide-react';
 
 export default function MoviePage() {
   const params = useParams();
@@ -16,6 +16,9 @@ export default function MoviePage() {
   const [movie, setMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isInWatchLater, setIsInWatchLater] = useState(false);
+  const [hasReview, setHasReview] = useState(false);
+  const [reviewId, setReviewId] = useState<number | null>(null);
   const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
@@ -28,7 +31,23 @@ export default function MoviePage() {
         // Only try to add movie if authenticated and we have movie data
         if (isAuthenticated && data) {
           try {
-            await movieApi.addMovie(data); // Pass the entire movie object
+            await movieApi.addMovie(data);
+            
+            // Check if movie is in watch later
+            const watchLaterList = await movieApi.getWatchLater();
+            const isInWatchLater = watchLaterList.some((item: any) => item.movie === data.id);
+            setIsInWatchLater(isInWatchLater);
+            
+            // Check if user has reviewed this movie
+            const reviews = await movieApi.getUserReviews();
+            const userReview = reviews.find((review: any) => review.movie === data.id);
+            if (userReview) {
+              setHasReview(true);
+              setReviewId(userReview.id);
+            } else {
+              setHasReview(false);
+              setReviewId(null);
+            }
           } catch (error: any) {
             console.error('Error adding movie to DB:', error);
           }
@@ -41,7 +60,7 @@ export default function MoviePage() {
     };
 
     fetchMovie();
-  }, [params.id, isAuthenticated]); // Dependencies that trigger the effect
+  }, [params.id, isAuthenticated]);
 
   const handleReviewClick = () => {
     if (!isAuthenticated) {
@@ -50,7 +69,11 @@ export default function MoviePage() {
       router.push('/login');
       return;
     }
-    router.push(`/movies/${params.id}/review`);
+    if (hasReview) {
+      router.push(`/movies/${params.id}/review/edit`);
+    } else {
+      router.push(`/movies/${params.id}/review`);
+    }
   };
 
   const handleWatchlaterClick = async () => {
@@ -59,15 +82,22 @@ export default function MoviePage() {
     }
     
     try {
-      await movieApi.addToWatchlater(movie!.id);
-      toast.success('Added to watch later');
+      if (isInWatchLater) {
+        await movieApi.removeFromWatchLater(movie!.id);
+        setIsInWatchLater(false);
+        toast.success('Removed from watch later');
+      } else {
+        await movieApi.addToWatchlater(movie!.id);
+        setIsInWatchLater(true);
+        toast.success('Added to watch later');
+      }
     } catch (error: any) {
       if (error.response?.status === 401) {
         useAuthStore.getState().logout();
         sessionStorage.setItem('redirectAfterLogin', `/movies/${params.id}`);
         router.push('/login');
       } else {
-        toast.error('Failed to add to watchlater');
+        toast.error('Failed to update watch later');
       }
     }
   };
@@ -209,10 +239,20 @@ export default function MoviePage() {
               <div className="flex flex-col sm:flex-row gap-4 mt-6">
                 <Button 
                   onClick={handleReviewClick}
-                  className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 rounded-full px-6 shadow-md transition-all duration-300"
+                  className={`rounded-full px-6 shadow-md transition-all duration-300 ${
+                    hasReview
+                      ? 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600'
+                      : 'bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600'
+                  }`}
                 >
-                  <PenLine className="w-4 h-4 mr-2" />
-                  {isAuthenticated ? 'Write Review' : 'Login to Review'}
+                  {hasReview ? (
+                    <Pencil className="w-4 h-4 mr-2" />
+                  ) : (
+                    <PenLine className="w-4 h-4 mr-2" />
+                  )}
+                  {isAuthenticated 
+                    ? (hasReview ? 'Edit Your Review' : 'Write Review')
+                    : 'Login to Review'}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -220,15 +260,21 @@ export default function MoviePage() {
                   disabled={!isAuthenticated}
                   className={`border-2 rounded-full px-6 transition-all duration-300 ${
                     isAuthenticated 
-                      ? 'border-pink-300 bg-white text-pink-600 hover:bg-pink-50 hover:text-pink-700'
+                      ? isInWatchLater
+                        ? 'border-green-300 bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700'
+                        : 'border-pink-300 bg-white text-pink-600 hover:bg-pink-50 hover:text-pink-700'
                       : 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
                   }`}
                   title={!isAuthenticated ? 'Please login to add to watchlater' : ''}
                 >
-                  <BookmarkPlus className={`w-4 h-4 mr-2 ${
-                    isAuthenticated ? 'text-pink-600' : 'text-gray-400'
-                  }`} />
-                  {isAuthenticated ? 'Add to Watchlater' : 'Login to Add to Watchlater'}
+                  {isInWatchLater ? (
+                    <BookmarkCheck className="w-4 h-4 mr-2 text-green-600" />
+                  ) : (
+                    <BookmarkPlus className="w-4 h-4 mr-2 text-pink-600" />
+                  )}
+                  {isAuthenticated 
+                    ? (isInWatchLater ? 'In Watch Later' : 'Add to Watch Later')
+                    : 'Login to Add to Watch Later'}
                 </Button>
               </div>
             </div>

@@ -194,4 +194,3 @@ function MovieCard({ movie, onMarkWatched }: MovieCardProps) {
     </div>
   )
 }
-

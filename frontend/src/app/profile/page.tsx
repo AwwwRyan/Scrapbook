@@ -11,6 +11,7 @@ import AnalyticsSection from "@/components/profile/AnalyticsSection"
 import { authApi } from "@/lib/api/auth"
 import axios from "axios"
 import { Heart, Sparkles, Film, Star, BarChart3 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface ApiError {
   response?: {
@@ -70,7 +71,7 @@ export default function ProfilePage() {
     )
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-pink-100 to-purple-100 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-r from-pink-100 to-purple-100 py-8 px-4" suppressHydrationWarning>
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-10 left-10 text-pink-300 opacity-30">
           <Sparkles size={40} />
@@ -131,10 +132,30 @@ export default function ProfilePage() {
             </TabsContent>
 
             <TabsContent value="reviews">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-purple-700">Recent Reviews</h2>
+                <Button
+                  variant="outline"
+                  onClick={() => router.push('/profile/reviews')}
+                  className="border-2 border-pink-200 hover:bg-pink-50"
+                >
+                  Manage All Reviews
+                </Button>
+              </div>
               <RecentReviews fullView />
             </TabsContent>
 
             <TabsContent value="watchlist">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-purple-700">Watch Later</h2>
+                <Button
+                  variant="outline"
+                  onClick={() => router.push('/profile/watchlist')}
+                  className="border-2 border-pink-200 hover:bg-pink-50"
+                >
+                  Manage Watchlist
+                </Button>
+              </div>
               <WatchlistSection fullView />
             </TabsContent>
 
@@ -147,4 +168,3 @@ export default function ProfilePage() {
     </div>
   )
 }
-

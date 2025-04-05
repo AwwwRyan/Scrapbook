@@ -8,6 +8,9 @@ import { movieApi } from "@/lib/api/movies"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PieChart, Pie, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts"
 import { Sparkles, Star, BarChart3, PieChartIcon, Clock, Film } from "lucide-react"
+import { GenrePieChart } from "./GenrePieChart"
+import { RatingBarChart } from "./RatingBarChart"
+import { WatchHistoryChart } from "./WatchHistoryChart"
 
 interface GenreAnalytics {
   distribution: Record<string, number>
@@ -106,7 +109,7 @@ export default function AnalyticsSection() {
           Movie Analytics
         </h2>
 
-        <Tabs defaultValue="genres">
+        <Tabs defaultValue="genres" className="min-h-[600px]">
           <TabsList className="flex w-full bg-pink-50 p-2 rounded-full border border-pink-200 mb-6 h-14">
             <TabsTrigger
               value="genres"
@@ -131,147 +134,21 @@ export default function AnalyticsSection() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="genres">
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-center text-purple-700 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 mr-2 text-pink-500" />
-                Genre Distribution
-                <Sparkles className="w-4 h-4 ml-2 text-pink-500" />
-              </h3>
-              <div className="h-[400px] bg-white/70 rounded-xl p-4 border border-pink-100">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={transformedGenreData}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={150}
-                      fill="#8884d8"
-                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                    >
-                      {transformedGenreData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value) => [`${value} movies`, "Count"]}
-                      contentStyle={{
-                        borderRadius: "8px",
-                        border: "1px solid #F9A8D4",
-                        backgroundColor: "rgba(255, 255, 255, 0.95)",
-                      }}
-                    />
-                    <Legend
-                      layout="horizontal"
-                      verticalAlign="bottom"
-                      align="center"
-                      wrapperStyle={{ paddingTop: "20px" }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <p className="text-sm text-purple-600 text-center italic">
-                Distribution of movies across different genres in your watchlist
-              </p>
+          <TabsContent value="genres" className="mt-6">
+            <div className="space-y-4 min-h-[500px]">
+              <GenrePieChart data={transformedGenreData} />
             </div>
           </TabsContent>
 
-          <TabsContent value="ratings">
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-center text-purple-700 flex items-center justify-center">
-                <Star className="w-4 h-4 mr-2 text-pink-500 fill-pink-500" />
-                Rating Distribution
-                <Star className="w-4 h-4 ml-2 text-pink-500 fill-pink-500" />
-              </h3>
-              <div className="h-[400px] bg-white/70 rounded-xl p-4 border border-pink-100 flex justify-center items-center">
-                <ResponsiveContainer width="60%" height="100%">
-                  <BarChart data={transformedRatingData}>
-                    <XAxis
-                      dataKey="name"
-                      label={{
-                        value: "Rating Stars",
-                        position: "bottom",
-                        offset: 0,
-                        fill: "#9F7AEA",
-                      }}
-                    />
-                    <YAxis
-                      label={{
-                        value: "Number of Movies",
-                        angle: -90,
-                        position: "insideLeft",
-                        fill: "#9F7AEA",
-                      }}
-                    />
-                    <Tooltip
-                      formatter={(value) => [`${value} movies`, "Count"]}
-                      contentStyle={{
-                        borderRadius: "8px",
-                        border: "1px solid #F9A8D4",
-                        backgroundColor: "rgba(255, 255, 255, 0.95)",
-                      }}
-                    />
-                    <Bar dataKey="value" fill="#8884d8" radius={[8, 8, 0, 0]}>
-                      {transformedRatingData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <p className="text-sm text-purple-600 text-center italic">
-                Distribution of your movie ratings from 1 to 5 stars
-              </p>
+          <TabsContent value="ratings" className="mt-6">
+            <div className="space-y-4 min-h-[800px]">
+              <RatingBarChart data={transformedRatingData} />
             </div>
           </TabsContent>
 
-          <TabsContent value="history">
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-center text-purple-700 flex items-center justify-center">
-                <Clock className="w-4 h-4 mr-2 text-pink-500" />
-                Watch History Timeline
-                <Clock className="w-4 h-4 ml-2 text-pink-500" />
-              </h3>
-              <div className="h-[400px] bg-white/70 rounded-xl p-4 border border-pink-100 flex justify-center items-center">
-                <ResponsiveContainer width="60%" height="100%">
-                  <BarChart data={watchHistory?.timeline || []}>
-                    <XAxis
-                      dataKey="date"
-                      label={{
-                        value: "Date",
-                        position: "bottom",
-                        offset: 0,
-                        fill: "#9F7AEA",
-                      }}
-                    />
-                    <YAxis
-                      label={{
-                        value: "Movies Watched",
-                        angle: -90,
-                        position: "insideLeft",
-                        fill: "#9F7AEA",
-                      }}
-                    />
-                    <Tooltip
-                      formatter={(value, name) => [`${value} movies`, "Movies Watched"]}
-                      labelFormatter={(date) => new Date(date).toLocaleDateString()}
-                      contentStyle={{
-                        borderRadius: "8px",
-                        border: "1px solid #F9A8D4",
-                        backgroundColor: "rgba(255, 255, 255, 0.95)",
-                      }}
-                    />
-                    <Bar dataKey="movies_watched" radius={[8, 8, 0, 0]} name="Movies Watched">
-                      {(watchHistory?.timeline || []).map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <p className="text-sm text-purple-600 text-center italic">Number of movies watched per day over time</p>
+          <TabsContent value="history" className="mt-6">
+            <div className="space-y-4 min-h-[800px]">
+              <WatchHistoryChart data={watchHistory?.timeline || []} />
             </div>
           </TabsContent>
         </Tabs>
@@ -322,4 +199,3 @@ function HighlightCard({ title, value = "-", suffix = "", icon }: HighlightCardP
     </div>
   )
 }
-

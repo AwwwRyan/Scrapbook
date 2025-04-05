@@ -174,4 +174,3 @@ function StatCard({ title, value, suffix = "", icon }: StatCardProps) {
     </div>
   )
 }
-

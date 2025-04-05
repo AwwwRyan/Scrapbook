@@ -183,7 +183,7 @@ export default function HomePage() {
   }, [isAuthenticated])
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-pink-100 to-purple-100">
+    <div className="min-h-screen bg-gradient-to-r from-pink-100 to-purple-100" suppressHydrationWarning>
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-10 left-10 text-pink-300 opacity-30">
           <Sparkles size={40} />
@@ -215,20 +215,29 @@ export default function HomePage() {
               <SearchBar onSearch={handleSearchResults} />
             </div>
             
-            <button
-              onClick={() => router.push('/profile')}
-              className="relative group"
-            >
-              <Avatar className="h-10 w-10 transition-transform group-hover:scale-110">
-                <AvatarImage 
-                  src="/default-avatar.png" 
-                  alt="/default-avatar.png" 
-                />
-                <AvatarFallback className="bg-gradient-to-r from-pink-500 to-purple-500 text-white">
-                  <User size={20} />
-                </AvatarFallback>
-              </Avatar>
-            </button>
+            <div className="flex items-center gap-8">
+              <Button
+                onClick={() => router.push('/analytics')}
+                className="bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:from-pink-600 hover:to-purple-600"
+              >
+                Analytics
+              </Button>
+              
+              <button
+                onClick={() => router.push('/profile')}
+                className="relative group"
+              >
+                <Avatar className="h-10 w-10 transition-transform group-hover:scale-110">
+                  <AvatarImage 
+                    src="/default-avatar.png" 
+                    alt="/default-avatar.png" 
+                  />
+                  <AvatarFallback className="bg-gradient-to-r from-pink-500 to-purple-500 text-white">
+                    <User size={20} />
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+            </div>
           </div>
         </div>
 

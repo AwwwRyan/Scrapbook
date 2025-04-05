@@ -176,13 +176,13 @@ export const movieApi = {
     }
   },
 
-  addReview: async (movieId: string, reviewData: { rating: number; review_text: string }) => {
+  addReview: async (movieId: string, data: { review_text: string; rating: number }) => {
     try {
       const response = await axiosInstance.post(
         `/movies/${movieId}/reviews/create/`,
         {
-          rating: parseFloat(reviewData.rating.toFixed(1)),
-          review_text: reviewData.review_text || ''
+          rating: parseFloat(data.rating.toFixed(1)),
+          review_text: data.review_text
         }
       );
       return response.data;
@@ -307,14 +307,7 @@ export const movieApi = {
     }
   },
 
-  deleteReview: async (reviewId: number) => {
-    try {
-      await axiosInstance.delete(`/reviews/${reviewId}/`);
-    } catch (error) {
-      console.error('Error deleting review:', error);
-      throw error;
-    }
-  },
+ 
 
   getWatchLater: async () => {
     try {
@@ -338,7 +331,6 @@ export const movieApi = {
 
   removeFromWatchLater: async (movieId: string) => {
     try {
-      await axiosInstance.post(`/watchlist/add/${movieId}/`);
       await axiosInstance.delete(`/watch-later/remove/${movieId}/`);
     } catch (error) {
       console.error('Error removing from watch later:', error);

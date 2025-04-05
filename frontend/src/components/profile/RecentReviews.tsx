@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card } from "@/components/ui/card"
 import { movieApi } from "@/lib/api/movies"
 import { Star, Film, Heart, ChevronRight, Sparkles } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 interface ReviewActivity {
   id: string
@@ -95,8 +96,37 @@ interface ReviewCardProps {
 }
 
 function ReviewCard({ review }: ReviewCardProps) {
+  const router = useRouter()
+  const [clickedId, setClickedId] = useState<string | null>(null)
+
+  // Handle navigation with loading state
+  const handleMovieClick = useCallback((movieId: string) => {
+    setClickedId(movieId)
+    router.push(`/movies/${movieId}`)
+  }, [router])
+
+  // Prefetch on hover
+  const handleMovieHover = useCallback((movieId: string) => {
+    router.prefetch(`/movies/${movieId}`)
+  }, [router])
+
   return (
-    <div className="flex gap-4 p-4 border-2 border-pink-100 rounded-xl bg-gradient-to-br from-white to-pink-50 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
+    <div 
+      className={`flex gap-4 p-4 border-2 border-pink-100 rounded-xl bg-gradient-to-br from-white to-pink-50 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 cursor-pointer
+        ${clickedId === review.movie.id ? 'opacity-70 scale-95' : 'opacity-100 scale-100'}
+      `}
+      onClick={() => handleMovieClick(review.movie.id)}
+      onMouseEnter={() => handleMovieHover(review.movie.id)}
+    >
+      {/* Add loading indicator when clicked */}
+      {clickedId === review.movie.id && (
+        <div className="absolute inset-0 bg-white/50 z-20 flex items-center justify-center rounded-xl">
+          <div className="animate-spin text-pink-500">
+            <Sparkles size={24} />
+          </div>
+        </div>
+      )}
+      
       <div className="relative w-24 h-36">
         {review.movie.image_url ? (
           <div className="relative w-full h-full rounded-lg overflow-hidden border-2 border-pink-200">
@@ -139,4 +169,3 @@ function ReviewCard({ review }: ReviewCardProps) {
     </div>
   )
 }
-
