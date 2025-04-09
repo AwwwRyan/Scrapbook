@@ -391,3 +391,424 @@ For endpoints returning lists, the response format includes pagination:
 - `search`: Search term for filtering results
 - `sort`: Sort field (e.g., 'release_date', '-rating' for descending)
 ```
+
+
+# Scrapbook - Movie Review & Recommendation App
+
+A collaborative platform for movie enthusiasts to log, review, and discuss films.
+
+## Frontend Architecture
+- Built with Next.js + React
+- UI powered by ShadCN UI for modular and aesthetic components
+- State Management using Zustand
+- Authentication using JWT tokens
+- Responsive design with Tailwind CSS
+
+## Database Models
+
+### Review Model
+```python
+class Review(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reviews")
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="reviews")
+    rating = models.FloatField()  # Rating out of 5
+    review_text = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'movie')  # One review per user per movie
+
+    def __str__(self):
+        return f"{self.user.name} - {self.movie.title} ({self.rating})"
+```
+
+### WatchLater Model
+```python
+class WatchLater(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="watchlist")
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="watchlist")
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'movie')  # Avoid duplicate watch later entries
+
+    def __str__(self):
+        return f"{self.user.name} wants to watch {self.movie.title}"
+```
+
+### Movie Model
+```python
+class Movie(models.Model):
+    id = models.CharField(max_length=20, primary_key=True)  # IMDB ID
+    title = models.CharField(max_length=255)
+    original_title = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    image_url = models.URLField(null=True, blank=True)
+    release_date = models.DateField(null=True, blank=True)
+    start_year = models.IntegerField(null=True, blank=True)
+    end_year = models.IntegerField(null=True, blank=True)
+    runtime_minutes = models.IntegerField(null=True, blank=True)
+    genres = models.JSONField(null=True, blank=True)  # Store genres as a list
+    language = models.CharField(max_length=50, null=True, blank=True)
+    countries = models.JSONField(null=True, blank=True)  # Store country list
+    rating = models.FloatField(null=True, blank=True)
+    num_votes = models.IntegerField(null=True, blank=True)
+    budget = models.BigIntegerField(null=True, blank=True)
+    gross_worldwide = models.BigIntegerField(null=True, blank=True)
+    is_adult = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return self.title
+```
+
+## Application Flow & Features
+
+### 1. Authentication
+- JWT-based authentication
+- Protected routes for authenticated users
+- Token storage in localStorage
+- Automatic token refresh
+- Redirect handling for protected routes
+
+#### Authentication Endpoints
+- Login: `POST /api/auth/login/`
+- Register: `POST /api/auth/register/`
+- Token Refresh: `POST /api/auth/token/refresh/`
+
+### 2. Homepage
+- No authentication required
+- Features:
+  - Popular movies section
+  - Top rated movies section
+  - Search functionality
+  - Movie cards with hover effects
+  - Lazy loading for better performance
+- Uses ShadCN's Card component for movie display
+
+#### Movie Display Components
+- MovieCard: Displays individual movie information
+- MovieGrid: Responsive grid layout for movies
+- Loading states with animations
+- Error handling with user feedback
+
+### 3. Search Functionality
+- Real-time search with debouncing
+- Search by:
+  - Movie title
+  - Genre
+  - Rating
+  - Release year
+- Results displayed in MovieGrid
+- Clear search option
+
+#### Search API Integration
+- Endpoint: `https://imdb236.p.rapidapi.com/imdb/search`
+- Parameters:
+  ```json
+  {
+    "type": "movie",
+    "genre": "Drama",
+    "rows": "25",
+    "sortOrder": "ASC",
+    "sortField": "id"
+  }
+  ```
+
+### 4. Movie Details Page
+- Rich movie information display
+- Features:
+  - Movie poster and details
+  - User reviews section
+  - Rating system
+  - Watch later button
+  - Review submission button
+- Responsive layout with grid system
+
+#### Movie Data Integration
+- Add Movie: `POST /api/movies/add/`
+- Get Movie Details: `GET /api/movies/{movie_id}/`
+- Headers: `Authorization: Bearer {token}`
+
+### 5. Review System
+- Star rating system (1-5 stars)
+- Review text input
+- Edit and delete capabilities
+- Review listing with pagination
+- User-specific review management
+
+#### Review Endpoints
+- Create Review: `POST /api/movies/{movie_id}/reviews/create/`
+- Update Review: `PUT /api/reviews/{review_id}/`
+- Delete Review: `DELETE /api/reviews/{review_id}/`
+- Get User Reviews: `GET /api/users/reviews/`
+
+### 6. Watchlist Management
+- Add/Remove movies from watchlist
+- Watchlist view in profile
+- Watch status tracking
+- Integration with review system
+
+#### Watchlist Endpoints
+- Add to Watchlist: `POST /api/watchlist/add/{movie_id}/`
+- Remove from Watchlist: `DELETE /api/watchlist/remove/{movie_id}/`
+- Get Watchlist: `GET /api/watchlist/`
+
+### 7. User Profile
+- Personal information display
+- Review history
+- Watchlist management
+- Analytics dashboard
+- Profile settings
+
+### 8. Analytics Dashboard
+- Review statistics
+- Watchlist analytics
+- Genre preferences
+- Rating distribution
+- Interactive charts
+
+## Profile Components
+
+### Profile Header
+- User avatar and basic info
+- Statistics display:
+  - Total movies watched
+  - Total reviews
+  - Average rating
+  - Watchlist count
+  - Watch later count
+- Profile settings access
+
+### Recent Activity
+- Review activities
+- Watch status updates
+- Watchlist additions
+- Activity timeline
+- Interactive cards with movie details
+
+### Watchlist Management
+- Watch Later list
+- Watched movies tracking
+- Mark as watched functionality
+- Movie status toggles
+- Grid/List view options
+
+### Review History
+- Star rating display
+- Review text snippets
+- Date tracking
+- Movie thumbnails
+- Quick access to edit/delete
+
+## UI/UX Features
+
+### Card Components
+1. MovieCard
+   - Poster display with fallback
+   - Rating badge
+   - Release date
+   - Genre tags
+   - Hover effects
+   - Loading states
+
+2. ReviewCard
+   - Movie thumbnail
+   - Star rating visualization
+   - Review snippet
+   - Date display
+   - Interactive hover states
+
+3. ActivityCard
+   - Activity type indicator
+   - Movie details
+   - Timestamp
+   - Action buttons
+
+### Loading States
+- Skeleton loaders
+- Spinner animations
+- Progress indicators
+- Placeholder content
+- Error states
+
+### Navigation
+- Smooth transitions
+- Loading indicators
+- Prefetching
+- Back button handling
+- Route protection
+
+### Responsive Design
+- Mobile-first approach
+- Grid layouts
+- Flexible cards
+- Adaptive typography
+- Touch-friendly interactions
+
+### Visual Feedback
+- Toast notifications
+- Loading spinners
+- Success/error states
+- Hover effects
+- Transition animations
+
+## Data Management
+
+### State Updates
+- Optimistic updates
+- Error handling
+- Loading states
+- Cache management
+- Data persistence
+
+### API Integration
+- Error boundaries
+- Retry logic
+- Timeout handling
+- Data transformation
+- Type safety
+
+### Performance
+- Image optimization
+- Lazy loading
+- Code splitting
+- Bundle optimization
+- Cache strategies
+
+## Development Guidelines
+
+### Code Organization
+- Component structure
+- File naming
+- Import order
+- Type definitions
+- Documentation
+
+### Testing
+- Unit tests
+- Integration tests
+- E2E tests
+- Performance testing
+- Accessibility testing
+
+### Deployment
+- Build process
+- Environment variables
+- Asset optimization
+- Error tracking
+- Analytics
+
+## UI Components
+
+### Core Components
+1. MovieCard
+   - Poster display
+   - Title and basic info
+   - Rating display
+   - Hover effects
+   - Action buttons
+
+2. SearchBar
+   - Real-time search
+   - Debounced input
+   - Clear button
+   - Loading state
+
+3. ReviewForm
+   - Star rating input
+   - Text area
+   - Submit button
+   - Validation
+
+4. Loading States
+   - Skeleton loaders
+   - Spinner animations
+   - Progress indicators
+
+### Layout Components
+1. Header
+   - Navigation
+   - Search
+   - User menu
+   - Authentication state
+
+2. Footer
+   - Links
+   - Copyright
+   - Social media
+
+3. Grid Layouts
+   - Responsive movie grid
+   - Review list
+   - Watchlist display
+
+## State Management
+
+### Auth Store
+```typescript
+interface AuthState {
+  token: string | null;
+  isAuthenticated: boolean;
+  setToken: (token: string | null) => void;
+  logout: () => void;
+}
+```
+
+### Movie Store
+```typescript
+interface MovieState {
+  movies: Movie[];
+  loading: boolean;
+  error: string | null;
+  setMovies: (movies: Movie[]) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+}
+```
+
+## API Integration
+
+### Base Configuration
+```typescript
+const API_BASE_URL = 'http://127.0.0.1:8000/api';
+const RAPID_API_BASE_URL = 'https://imdb236.p.rapidapi.com/imdb';
+```
+
+### Headers
+```typescript
+const headers = {
+  'Authorization': `Bearer ${token}`,
+  'Content-Type': 'application/json'
+};
+```
+
+## Error Handling
+- API error responses
+- Network errors
+- Authentication errors
+- Form validation
+- User feedback with toast notifications
+
+## Performance Optimizations
+- Image lazy loading
+- Component memoization
+- Debounced search
+- Pagination for lists
+- Caching strategies
+
+## Security Considerations
+- JWT token management
+- Protected routes
+- Input sanitization
+- XSS prevention
+- CSRF protection
+
+## Best Practices
+- Component composition
+- Type safety with TypeScript
+- Responsive design
+- Accessibility
+- Error boundaries
+- Loading states
+- Form validation
+- User feedback
