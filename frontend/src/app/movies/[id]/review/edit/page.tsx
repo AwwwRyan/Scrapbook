@@ -81,7 +81,7 @@ export default function EditReviewPage() {
       });
 
       toast.success('Review updated successfully');
-      router.push(`/movies/${params.id}`);
+      router.replace(`/movies/${params.id}`);
     } catch (error) {
       toast.error('Failed to update review');
     }

@@ -60,7 +60,7 @@ export default function LoginPage() {
         sessionStorage.removeItem('redirectAfterLogin')
         
         // Redirect to the stored path or default to profile
-        router.push(redirectPath || '/profile')
+        router.push(redirectPath || '/')
       } else {
         throw new Error('No access token received')
       }
@@ -79,7 +79,7 @@ export default function LoginPage() {
   }
 
   return (<>
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-pink-100 to-purple-100">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-pink-100 to-purple-100" suppressHydrationWarning>
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-10 left-10 text-pink-300 opacity-30">
           <Sparkles size={40} />

@@ -33,6 +33,7 @@ export const authApi = {
       const { access } = response.data;
       if (access) {
         localStorage.setItem('token', access);
+        useAuthStore.getState().setToken(access);
       }
       return response.data;
     } catch (error) {

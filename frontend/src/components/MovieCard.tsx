@@ -11,7 +11,7 @@ interface MovieCardProps {
 
 export default function MovieCard({ movie }: MovieCardProps) {
   return (
-    <Card className="overflow-hidden border-2 border-pink-200 shadow-lg rounded-xl bg-white/90 backdrop-blur-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+    <Card className="overflow-hidden border-2 border-pink-200 shadow-lg rounded-xl bg-white/90 backdrop-blur-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1" suppressHydrationWarning>
       <CardContent className="p-0">
         {movie.image_url && (
           <div className="relative h-[200px] w-full">

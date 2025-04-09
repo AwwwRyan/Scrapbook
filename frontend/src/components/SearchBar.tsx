@@ -32,7 +32,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
   };
 
   return (
-    <div className="relative">
+    <div className="relative" suppressHydrationWarning>
       <div className="absolute -top-10 -right-10 text-pink-200 opacity-20 pointer-events-none">
         <Sparkles size={40} />
       </div>

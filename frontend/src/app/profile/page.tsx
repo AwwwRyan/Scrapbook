@@ -10,7 +10,7 @@ import WatchlistSection from "@/components/profile/WatchlistSection"
 import AnalyticsSection from "@/components/profile/AnalyticsSection"
 import { authApi } from "@/lib/api/auth"
 import axios from "axios"
-import { Heart, Sparkles, Film, Star, BarChart3 } from "lucide-react"
+import { Heart, Sparkles, Film, Star, BarChart3, CheckCircle, User, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface ApiError {
@@ -23,7 +23,7 @@ interface ApiError {
 
 export default function ProfilePage() {
   const router = useRouter()
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, logout } = useAuthStore()
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("overview")
 
@@ -58,6 +58,11 @@ export default function ProfilePage() {
     checkAuth()
   }, [isAuthenticated, router])
 
+  const handleLogout = () => {
+    logout()
+    router.push('/')
+  }
+
   if (loading)
     return (
       <div className="min-h-screen bg-gradient-to-r from-pink-100 to-purple-100 flex items-center justify-center">
@@ -88,36 +93,45 @@ export default function ProfilePage() {
       </div>
 
       <div className="container mx-auto relative z-10">
+        <div className="flex justify-between items-center mb-8">
+        <div 
+              onClick={() => router.push('/')}
+              className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-purple-600 flex items-center cursor-pointer hover:scale-105 transition-transform"
+            >
+              Scrapbook
+              <Sparkles className="ml-2 text-pink-500" size={24} />
+            </div>
+          <Button
+            variant="outline"
+            onClick={handleLogout}
+            className="border-2 border-pink-200 hover:bg-pink-50 text-pink-600"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
+        </div>
+
         <ProfileHeader />
 
         <Tabs defaultValue="overview" className="mt-8">
           <TabsList className="flex w-full bg-white/80 backdrop-blur-sm border-2 border-pink-200 p-2 rounded-full h-14">
-            
-            <TabsTrigger value="overview"
-              className="flex-1 flex items-center justify-center h-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-purple-500 data-[state=active]:text-white rounded-full transition-all duration-300"
-            >
+            <TabsTrigger value="overview" className="flex-1 flex items-center justify-center h-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-purple-500 data-[state=active]:text-white rounded-full transition-all duration-300">
               <Film className="w-4 h-4 mr-2" />
               Overview
             </TabsTrigger>
-            <TabsTrigger
-              value="reviews"
-              className="flex-1 flex items-center justify-center h-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-purple-500 data-[state=active]:text-white rounded-full transition-all duration-300"
-            >
+            <TabsTrigger value="reviews" className="flex-1 flex items-center justify-center h-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-purple-500 data-[state=active]:text-white rounded-full transition-all duration-300">
               <Star className="w-4 h-4 mr-2" />
               Reviews
             </TabsTrigger>
-            <TabsTrigger
-              value="watchlist"
-              className="flex-1 flex items-center justify-center h-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-purple-500 data-[state=active]:text-white rounded-full transition-all duration-300"
-            >
-              <Heart className="w-4 h-4 mr-2" />
+            <TabsTrigger value="watchlist" className="flex-1 flex items-center justify-center h-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-purple-500 data-[state=active]:text-white rounded-full transition-all duration-300">
+              <CheckCircle className="w-4 h-4 mr-2" />
               Watchlist
             </TabsTrigger>
-            <TabsTrigger
-              value="analytics"
-              
-              className="flex-1 flex items-center justify-center h-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-purple-500 data-[state=active]:text-white rounded-full transition-all duration-300"
-            >
+            <TabsTrigger value="watchlater" className="flex-1 flex items-center justify-center h-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-purple-500 data-[state=active]:text-white rounded-full transition-all duration-300">
+              <Heart className="w-4 h-4 mr-2" />
+              Watch Later
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex-1 flex items-center justify-center h-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-purple-500 data-[state=active]:text-white rounded-full transition-all duration-300">
               <BarChart3 className="w-4 h-4 mr-2" />
               Analytics
             </TabsTrigger>
@@ -127,7 +141,7 @@ export default function ProfilePage() {
             <TabsContent value="overview">
               <div className="grid gap-6 md:grid-cols-2">
                 <RecentReviews />
-                <WatchlistSection />
+                <WatchlistSection showWatchedOnly={true} />
               </div>
             </TabsContent>
 
@@ -147,16 +161,30 @@ export default function ProfilePage() {
 
             <TabsContent value="watchlist">
               <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-purple-700">Watched Movies</h2>
+                <Button
+                  variant="outline"
+                  onClick={() => router.push('/profile/watched')}
+                  className="border-2 border-pink-200 hover:bg-pink-50"
+                >
+                  View All Watched Movies
+                </Button>
+              </div>
+              <WatchlistSection showWatchedOnly={true} />
+            </TabsContent>
+
+            <TabsContent value="watchlater">
+              <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-purple-700">Watch Later</h2>
                 <Button
                   variant="outline"
                   onClick={() => router.push('/profile/watchlist')}
                   className="border-2 border-pink-200 hover:bg-pink-50"
                 >
-                  Manage Watchlist
+                  Manage Watch Later
                 </Button>
               </div>
-              <WatchlistSection fullView />
+              <WatchlistSection showWatchedOnly={false} />
             </TabsContent>
 
             <TabsContent value="analytics">

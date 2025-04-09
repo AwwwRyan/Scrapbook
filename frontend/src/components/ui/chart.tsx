@@ -21,7 +21,7 @@ export function ChartContainer({
   className,
 }: ChartContainerProps) {
   return (
-    <div className={cn("w-full", className)}>
+    <div className={cn("w-full", className)} suppressHydrationWarning>
       <ResponsiveContainer width="100%" height="100%">
         {children}
       </ResponsiveContainer>

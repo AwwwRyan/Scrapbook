@@ -1,18 +1,27 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
-        domains: [
-            'm.media-amazon.com', // For IMDb images
-            'image.tmdb.org', // If you're using TMDB
-            'localhost', // For local development
-            '127.0.0.1', // For local development
-            'ui-avatars.com', // Add this
-        ],
-        // You can also use a more flexible pattern with remotePatterns
         remotePatterns: [{
-            protocol: 'https',
-            hostname: '**', // Allow all domains (use with caution)
-        }]
+                protocol: 'https',
+                hostname: 'm.media-amazon.com', // For IMDb images
+            },
+            {
+                protocol: 'https',
+                hostname: 'image.tmdb.org', // For TMDB
+            },
+            {
+                protocol: 'http',
+                hostname: 'localhost', // For local development
+            },
+            {
+                protocol: 'http',
+                hostname: '127.0.0.1', // For local development
+            },
+            {
+                protocol: 'https',
+                hostname: 'ui-avatars.com', // For avatars
+            }
+        ]
     },
 }
 

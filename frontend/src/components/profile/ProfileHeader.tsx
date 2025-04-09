@@ -72,7 +72,7 @@ export default function ProfileHeader() {
   }
 
   return (
-    <Card className="p-8 border-2 border-pink-200 shadow-lg rounded-2xl bg-white/90 backdrop-blur-sm overflow-hidden relative">
+    <Card className="p-8 border-2 border-pink-200 shadow-lg rounded-2xl bg-white/90 backdrop-blur-sm overflow-hidden relative" suppressHydrationWarning>
       <div className="absolute -top-12 -right-12 text-pink-100 opacity-20 transform rotate-12">
         <Sparkles size={100} />
       </div>

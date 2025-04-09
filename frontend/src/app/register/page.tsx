@@ -28,16 +28,14 @@ export default function RegisterPage() {
     e.preventDefault()
     try {
       const response = await authApi.register(formData)
-      if (response.token) {
-        sessionStorage.setItem("token", response.token)
-        
-        // Get the redirect path
-        const redirectPath = sessionStorage.getItem('redirectAfterRegister')
-        sessionStorage.removeItem('redirectAfterRegister')
-        
-        // Redirect to the stored path or default to profile
-        router.push(redirectPath || '/profile')
-      }
+      // The token is already saved in localStorage by the authApi.register function
+      
+      // Get the redirect path
+      const redirectPath = sessionStorage.getItem('redirectAfterRegister')
+      sessionStorage.removeItem('redirectAfterRegister')
+      
+      // Redirect to the stored path or default to profile
+      router.push(redirectPath || '/')
     } catch (err) {
       console.error("Registration failed:", err)
       toast.error("Registration failed. Please try again.")
@@ -45,7 +43,7 @@ export default function RegisterPage() {
   }
 
   return (<>
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-pink-100 to-purple-100">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-pink-100 to-purple-100" suppressHydrationWarning>
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-10 left-10 text-pink-300 opacity-30">
           <Sparkles size={40} />

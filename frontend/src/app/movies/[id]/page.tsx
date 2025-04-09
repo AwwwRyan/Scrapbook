@@ -19,6 +19,7 @@ export default function MoviePage() {
   const [isInWatchLater, setIsInWatchLater] = useState(false);
   const [hasReview, setHasReview] = useState(false);
   const [reviewId, setReviewId] = useState<number | null>(null);
+  const [isWatched, setIsWatched] = useState(false);
   const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
@@ -37,6 +38,11 @@ export default function MoviePage() {
             const watchLaterList = await movieApi.getWatchLater();
             const isInWatchLater = watchLaterList.some((item: any) => item.movie === data.id);
             setIsInWatchLater(isInWatchLater);
+            
+            // Check if user has watched this movie
+            const watchlist = await movieApi.getWatchlist();
+            const isWatched = watchlist.some((item: any) => item.movie === data.id);
+            setIsWatched(isWatched);
             
             // Check if user has reviewed this movie
             const reviews = await movieApi.getUserReviews();
@@ -69,6 +75,12 @@ export default function MoviePage() {
       router.push('/login');
       return;
     }
+    
+    if (!isWatched) {
+      toast.error('You need to mark this movie as watched before writing a review');
+      return;
+    }
+    
     if (hasReview) {
       router.push(`/movies/${params.id}/review/edit`);
     } else {
@@ -98,6 +110,34 @@ export default function MoviePage() {
         router.push('/login');
       } else {
         toast.error('Failed to update watch later');
+      }
+    }
+  };
+
+  const handleMarkAsWatched = async () => {
+    if (!isAuthenticated) {
+      toast.error('Please login to mark movies as watched');
+      sessionStorage.setItem('redirectAfterLogin', `/movies/${params.id}`);
+      router.push('/login');
+      return;
+    }
+    
+    try {
+      if (isWatched) {
+        // If already watched, we could add an option to "unwatch" if needed
+        toast('You have already watched this movie');
+      } else {
+        await movieApi.addToWatchlist(movie!.id);
+        setIsWatched(true);
+        toast.success('Movie marked as watched!');
+      }
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        useAuthStore.getState().logout();
+        sessionStorage.setItem('redirectAfterLogin', `/movies/${params.id}`);
+        router.push('/login');
+      } else {
+        toast.error('Failed to mark movie as watched');
       }
     }
   };
@@ -146,7 +186,8 @@ export default function MoviePage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-pink-100 to-purple-100 py-10">
+    <div className="min-h-screen bg-gradient-to-r from-pink-100 to-purple-100 py-10" suppressHydrationWarning>
+      
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-10 left-10 text-pink-300 opacity-30">
           <Sparkles size={40} />
@@ -237,23 +278,29 @@ export default function MoviePage() {
               </div>
               
               <div className="flex flex-col sm:flex-row gap-4 mt-6">
-                <Button 
-                  onClick={handleReviewClick}
-                  className={`rounded-full px-6 shadow-md transition-all duration-300 ${
-                    hasReview
-                      ? 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600'
-                      : 'bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600'
+              <Button 
+                  variant="outline" 
+                  onClick={handleMarkAsWatched}
+                  disabled={!isAuthenticated || isWatched}
+                  className={`border-2 rounded-full px-6 transition-all duration-300 ${
+                    isAuthenticated 
+                      ? isWatched
+                        ? 'border-green-300 bg-green-50 text-green-600'
+                        : 'border-blue-300 bg-white text-blue-600 hover:bg-blue-50 hover:text-blue-700'
+                      : 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
                   }`}
+                  title={!isAuthenticated ? 'Please login to mark as watched' : (isWatched ? 'You have already watched this movie' : '')}
                 >
-                  {hasReview ? (
-                    <Pencil className="w-4 h-4 mr-2" />
+                  {isWatched ? (
+                    <BookmarkCheck className="w-4 h-4 mr-2 text-green-600" />
                   ) : (
-                    <PenLine className="w-4 h-4 mr-2" />
+                    <Film className="w-4 h-4 mr-2 text-blue-600" />
                   )}
                   {isAuthenticated 
-                    ? (hasReview ? 'Edit Your Review' : 'Write Review')
-                    : 'Login to Review'}
+                    ? (isWatched ? 'Watched' : 'Mark as Watched')
+                    : 'Login to Mark as Watched'}
                 </Button>
+                
                 <Button 
                   variant="outline" 
                   onClick={handleWatchlaterClick}
@@ -275,6 +322,25 @@ export default function MoviePage() {
                   {isAuthenticated 
                     ? (isInWatchLater ? 'In Watch Later' : 'Add to Watch Later')
                     : 'Login to Add to Watch Later'}
+                </Button>
+                <Button 
+                  onClick={handleReviewClick}
+                  className={`rounded-full px-6 shadow-md transition-all duration-300 ${
+                    hasReview
+                      ? 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600'
+                      : 'bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600'
+                  }`}
+                  disabled={!isWatched}
+                  title={!isWatched ? 'You need to mark this movie as watched before writing a review' : ''}
+                >
+                  {hasReview ? (
+                    <Pencil className="w-4 h-4 mr-2" />
+                  ) : (
+                    <PenLine className="w-4 h-4 mr-2" />
+                  )}
+                  {isAuthenticated 
+                    ? (hasReview ? 'Edit Your Review' : 'Write Review')
+                    : 'Login to Review'}
                 </Button>
               </div>
             </div>
